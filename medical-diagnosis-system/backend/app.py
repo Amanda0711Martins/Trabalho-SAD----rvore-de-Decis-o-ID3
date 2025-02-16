@@ -1,13 +1,13 @@
-from flask import Flask, logging, request, jsonify
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from db import get_db_connection
-from id3 import train_id3, predict_disease
+from id3 import train_id3
+from id3 import train_id3, predict
 
 app = Flask(__name__)
 CORS(app)
 
-logging.getLogger('flask_cors').level = logging.DEBUG
-
+# Rota para diagnóstico
 @app.route('/diagnosis', methods=['POST'])
 def diagnose():
     data = request.json
@@ -15,13 +15,19 @@ def diagnose():
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
+
     cursor.execute("SELECT * FROM training_data")
     training_data = cursor.fetchall()
     cursor.close()
     conn.close()
 
-    diagnosis = predict_disease(training_data, symptoms)
+    if not training_data:
+        return jsonify({"error": "Nenhum dado de treinamento disponível"}), 500
+
+    tree = train_id3(training_data)
+    diagnosis = predict(tree, symptoms)
+
     return jsonify({"diagnosis": diagnosis})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)

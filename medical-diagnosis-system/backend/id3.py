@@ -46,6 +46,22 @@ def train_id3(training_data):
     features = np.array([s['symptom_id'] for s in training_data])
     return id3(X, y, features)
 
-def predict_disease(training_data, symptoms):
-    tree = train_id3(training_data)
-    return predict(tree, np.array(symptoms))
+def predict(tree, symptoms):
+    node = tree
+    while node.children:
+        value = symptoms.get(node.feature, None)
+        if value in node.children:
+            node = node.children[value]
+        else:
+            break
+    return node.label if node.label else "Desconhecido"
+
+def predict(tree, symptoms):
+    node = tree
+    while node.children:
+        value = symptoms.get(node.feature, None)  # Pega o valor do sintoma
+        if value in node.children:
+            node = node.children[value]
+        else:
+            break  # Se não encontrar, para aqui
+    return node.label if node.label else "Desconhecido"
